@@ -1,0 +1,10 @@
+apiVersion: serving.kserve.io/v1alpha1
+kind: TrainedModel
+metadata:
+  name: sam-image-encoder
+spec:
+  inferenceService: sam-image-encoder
+  model:
+    framework: triton
+    storageUri: gs://cw-ml-models/triton/models/sam_image_encoder
+    memory: 4Gi

@@ -1,0 +1,48 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: sam-image-encoder
+  annotations:
+    serving.kserve.io/enable-prometheus-scraping: "true"
+spec:
+  predictor:
+    # nodeSelector:
+    #   cloud.google.com/gke-nodepool: "gpu-pool"
+    #   cloud.google.com/gke-accelerator: "nvidia-tesla-t4"
+    model:
+      modelFormat:
+        name: triton
+      storageUri: pvc://model-pv-claim/sam_image_encoder.tgz
+#      storageUri: gs://cw-ml-models/triton/models/sam_image_encoder.tgz
+      runtimeVersion: 23.03-py3
+      ports:
+        - name: h2c
+          protocol: TCP
+          containerPort: 9000
+      # resources:
+      #   limits:
+      #     nvidia.com/gpu: 1
+      #     cpu: 1 
+      #     memory: 4Gi
+  transformer:
+    # nodeSelector:
+    #   cloud.google.com/gke-nodepool: "default-pool"
+    containers:
+      - image: nhm0819/sam_image_transformer:latest
+#      - image: gcr.io/crowdworks-aiml-ops/sam_image_transformer:v0.1
+        name: sam_image_encoder
+        command:
+          - "python"
+          - "transformer.py"
+        args:
+          - --model_name
+          - sam_image_encoder
+          - --protocol
+          - grpc-v2
+        resources:
+          limits:
+            cpu: 0.5
+            memory: 1Gi
+          requests:
+            cpu: 0.5
+            memory: 1Gi

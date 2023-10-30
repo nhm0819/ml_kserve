@@ -1,0 +1,58 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: image-retrieval
+  annotations:
+    serving.kserve.io/enable-prometheus-scraping: "true"
+spec:
+  predictor:
+    nodeSelector:
+      cloud.google.com/gke-nodepool: "gpu-pool"
+      cloud.google.com/gke-accelerator: "nvidia-tesla-t4"
+    model:
+      modelFormat:
+        name: triton
+      storageUri: gs://cw-ml-models/triton/models/image-retrieval
+      runtimeVersion: 23.03-py3
+      ports:
+        - name: h2c
+          protocol: TCP
+          containerPort: 9000
+      resources:
+        limits:
+          nvidia.com/gpu: 1
+          cpu: 1
+          memory: 4Gi
+        requests:
+          nvidia.com/gpu: 1
+          cpu: 1
+          memory: 4Gi
+  transformer:
+    nodeSelector:
+      cloud.google.com/gke-nodepool: "default-pool"
+    containers:
+      - image: gcr.io/crowdworks-aiml-ops/image-retrieval:v1
+        name: image_retrieval
+        command:
+          - "python"
+          - "transformer.py"
+        args:
+          - --model_name
+          - image-retrieval
+          - --protocol
+          - grpc-v2
+        resources:
+          limits:
+            cpu: 1
+            memory: 4Gi
+          requests:
+            cpu: 1
+            memory: 4Gi
+        volumeMounts:
+          - name: platform-sa-key-volume
+            mountPath: /secrets/
+            readOnly: true
+    volumes:
+      - name: platform-sa-key-volume
+        secret:
+          secretName: platform-sa-secret

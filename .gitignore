@@ -1,0 +1,7 @@
+*.tgz
+*.zip
+*.pt
+*.onnx
+models
+.idea
+**/.DS_Store

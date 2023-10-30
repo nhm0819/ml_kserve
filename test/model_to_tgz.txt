@@ -1,0 +1,2 @@
+tar -cvf sam_image_encoder.tar sam_image_encoder/
+gzip < sam_image_encoder.tar > sam_image_encoder.tgz
